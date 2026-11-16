@@ -1,0 +1,13 @@
+{
+  "name": "agent-team-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Small test project for exercising an agent team end to end.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
