@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { capitalize, wordCount, slugify } from "../src/text.js";
+import { capitalize, wordCount, slugify, truncate } from "../src/text.js";
 
 test("capitalize uppercases the first character", () => {
   assert.equal(capitalize("hello"), "Hello");
@@ -43,6 +43,46 @@ test("slugify returns an empty string for empty or all-symbol input", () => {
 test("slugify rejects non-strings", () => {
   for (const input of [undefined, null, 42, NaN, true, 1n, {}, [], Symbol("text"), () => "text", new String("text")]) {
     assert.throws(() => slugify(input), {
+      name: "TypeError",
+      message: "input must be a string",
+    });
+  }
+});
+
+test("truncate returns input unchanged when it fits", () => {
+  assert.equal(truncate("Hello", 5), "Hello");
+  assert.equal(truncate("Hello", 10), "Hello");
+  assert.equal(truncate("", 1), "");
+  assert.equal(truncate("🙂🙂", 2), "🙂🙂");
+});
+
+test("truncate cuts to exactly maxLength characters ending with an ellipsis", () => {
+  assert.equal(truncate("Hello, world", 8), "Hello, …");
+  assert.equal(truncate("Hello", 4), "Hel…");
+  assert.equal(truncate("Hello", 1), "…");
+  for (const maxLength of [1, 2, 5, 11]) {
+    const result = truncate("Hello, world", maxLength);
+    assert.equal(Array.from(result).length, maxLength);
+    assert.ok(result.endsWith("…"));
+  }
+});
+
+test("truncate never splits a surrogate pair", () => {
+  assert.equal(truncate("a🙂b🙂c", 3), "a🙂…");
+});
+
+test("truncate rejects maxLength that is not an integer of at least 1", () => {
+  for (const maxLength of [0, -1, 1.5, NaN, Infinity, -Infinity, "5", null, undefined, 5n, new Number(5)]) {
+    assert.throws(() => truncate("Hello", maxLength), {
+      name: "RangeError",
+      message: "maxLength must be an integer of at least 1",
+    });
+  }
+});
+
+test("truncate rejects non-strings", () => {
+  for (const input of [undefined, null, 42, true, {}, [], new String("text")]) {
+    assert.throws(() => truncate(input, 5), {
       name: "TypeError",
       message: "input must be a string",
     });
